@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.hadoop.conf.Configuration;
 
-class ConnectorConfigurations {
+public class ConnectorConfigurations {
   private static final GoogleLogger logger = GoogleLogger.forEnclosingClass();
 
   protected ConnectorConfigurations() {}

@@ -2,31 +2,28 @@ package com.google.cloud.hadoop.perf;
 
 import static java.lang.Math.max;
 
-import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations.BENCHMARK_TYPE_ENUM;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.flogger.GoogleLogger;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Random;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.Path;
 
-class ReadBenchmark {
+public class JavaClientBenchmark {
+
   private static final GoogleLogger logger = GoogleLogger.forEnclosingClass();
 
   private final String fileName = "open_withItemInfo0";
-  private final GoogleHadoopFileSystem ghfs;
-  private final ConnectorConfigurations connectorConfigurations = new ConnectorConfigurations();
-
   private final BenchmarkConfigurations benchmarkConfigurations;
+  private final Storage client;
 
-  public ReadBenchmark(BenchmarkConfigurations benchmarkConfigurations) throws IOException {
+  public JavaClientBenchmark(BenchmarkConfigurations benchmarkConfigurations) {
     this.benchmarkConfigurations = benchmarkConfigurations;
-    this.ghfs =
-        createGhfs(
-            connectorConfigurations.getConfiguration(benchmarkConfigurations.getConfigMap()));
+    this.client = StorageOptions.grpc().setAttemptDirectPath(true).build().getService();
   }
 
   public void start() throws IOException {
@@ -39,18 +36,18 @@ class ReadBenchmark {
   }
 
   private void seqRead() throws IOException {
-    FileStatus fs = ghfs.getFileStatus(new Path(fileName));
 
-    logger.atInfo().log("file %s, length %d ", fileName, fs.getLen());
-    FSDataInputStream inputStream = ghfs.open(new Path(fileName));
-    long remaining = fs.getLen();
+    long remaining = 300 * 1024 * 1024;
+    BlobId blobId = BlobId.of("gcs-grpc-team-rdsingh", fileName);
+    ReadChannel channel = client.reader(blobId);
+    channel.seek(0);
+    channel.limit(remaining);
     int countRead = 0;
     while (remaining > 0) {
       long startIndex = max(0, remaining - benchmarkConfigurations.getChunkSize());
       remaining = startIndex;
-      byte[] value = new byte[benchmarkConfigurations.getChunkSize()];
-      inputStream.seek(startIndex);
-      int bytesRead = inputStream.read(value);
+      ByteBuffer value = ByteBuffer.allocate(benchmarkConfigurations.getChunkSize());
+      int bytesRead = channel.read(value);
       logger.atInfo().log("%d bytes read from file: %s ", bytesRead, fileName);
       countRead = countRead + 1;
     }
@@ -59,12 +56,11 @@ class ReadBenchmark {
   }
 
   private void randomRead() throws IOException {
-    FileStatus fs = ghfs.getFileStatus(new Path(fileName));
 
-    logger.atInfo().log("file %s, length %d ", fileName, fs.getLen());
-    FSDataInputStream inputStream = ghfs.open(new Path(fileName));
+    logger.atInfo().log("file %s ", fileName);
+    BlobId blobId = BlobId.of("gcs-grpc-team-rdsingh", fileName);
 
-    long fileLength = fs.getLen();
+    long fileLength = 300 * 1024 * 1024;
     int fileSizeKB = (int) (fileLength / 1024);
 
     int chunkSize = benchmarkConfigurations.getChunkSize();
@@ -76,23 +72,20 @@ class ReadBenchmark {
       countRead += 1;
       Random r = new Random(i);
       long offset = (long) r.nextInt(fileSizeKB - chunkSizeKB) * 1024;
-      byte[] buff = new byte[chunkSize];
+      ByteBuffer buff = ByteBuffer.allocate(chunkSize);
+
       long start = System.currentTimeMillis();
-      inputStream.seek(offset);
-      int readBytes = inputStream.read(buff);
+      ReadChannel channel = client.reader(blobId);
+      channel.seek(offset);
+      channel.limit(offset + chunkSize);
+      int readBytes = channel.read(buff);
       long dur = System.currentTimeMillis() - start;
+      channel.close();
       if (readBytes < chunkSize) {
         logger.atWarning().log("Got remaining bytes: %d", chunkSize - readBytes);
       }
-      logger.atInfo().log("RANDOM-READ duration : %d", dur);
+      logger.atInfo().log("RANDOM-READ java-client grpc duration : %d", dur);
     }
     logger.atInfo().log("read whole file and took %d iterations", countRead);
-  }
-
-  private GoogleHadoopFileSystem createGhfs(Configuration config) throws IOException {
-    GoogleHadoopFileSystem ghfs = new GoogleHadoopFileSystem();
-    logger.atInfo().log("Client library used %s", config.get("fs.gs.client.type"));
-    ghfs.initialize(new Path("gs://gcs-grpc-team-rdsingh").toUri(), config);
-    return ghfs;
   }
 }

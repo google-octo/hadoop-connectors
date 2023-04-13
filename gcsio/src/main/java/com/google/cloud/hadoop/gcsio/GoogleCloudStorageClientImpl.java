@@ -22,8 +22,8 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auto.value.AutoBuilder;
-import com.google.cloud.NoCredentials;
 import com.google.cloud.hadoop.util.AccessBoundary;
 import com.google.cloud.hadoop.util.ErrorTypeExtractor;
 import com.google.cloud.hadoop.util.GrpcErrorTypeExtractor;
@@ -192,11 +192,15 @@ public class GoogleCloudStorageClientImpl extends ForwardingGoogleCloudStorage {
   }
 
   private static Storage createStorage(
-      Credentials credentials, GoogleCloudStorageOptions storageOptions) {
+      Credentials credentials, GoogleCloudStorageOptions storageOptions) throws IOException {
+    logger.atInfo().log("DIRECT_PATH is %s", storageOptions.isDirectPathPreferred());
+    String grpcVariable = System.getenv("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS");
+    logger.atInfo().log("DIRECT_PATH_XDS is %s", grpcVariable);
+
     return StorageOptions.grpc()
         .setAttemptDirectPath(storageOptions.isDirectPathPreferred())
         .setHeaderProvider(() -> storageOptions.getHttpRequestHeaders())
-        .setCredentials(credentials != null ? credentials : NoCredentials.getInstance())
+        .setCredentials(GoogleCredentials.getApplicationDefault())
         .build()
         .getService();
   }

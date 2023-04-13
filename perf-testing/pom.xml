@@ -24,6 +24,13 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage-bom</artifactId>
+      <version>${google.cloud-storage.bom.version}</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.cloud.bigdataoss</groupId>
       <artifactId>gcs-connector</artifactId>
       <version>${hadoop.identifier}-${bigdataoss.version}</version>
@@ -48,6 +55,10 @@
     <dependency>
       <groupId>com.google.flogger</groupId>
       <artifactId>flogger-system-backend</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
     </dependency>
   </dependencies>
 
@@ -126,8 +137,26 @@
                   <include>com.google.storage.v2</include>
                   <!-- Needed by http client and versions conflict -->
                   <include>commons-codec:commons-codec</include>
+                  <include>commons-cli</include>
                   <include>com.lmax</include>
-                  <include>io.grpc</include>
+                  <include>io.grpc:grpc-alts</include>
+                  <include>io.grpc:grpc-context</include>
+                  <include>io.grpc:grpc-core</include>
+                  <include>io.grpc:grpc-census</include>
+                  <include>io.grpc:grpc-netty-shaded</include>O
+                  <include>io.grpc:grpc-protobuf</include>
+                  <include>io.grpc:grpc-stub</include>
+                  <include>io.grpc:grpc-xds</include>
+                  <include>io.grpc:grpc-auth</include>
+                  <include>io.grpc:grpc-api</include>
+                  <include>io.grpc:grpc-grpclb</include>
+                  <include>io.grpc:grpc-netty</include>
+                  <include>io.grpc:grpc-services</include>
+                  <include>io.grpc:grpc-googleapis</include>
+                  <include>io.grpc:grpc-protobuf</include>
+                  <include>io.grpc:grpc-protobuf-lite</include>
+                  <include>io.grpc:grpc-okhttp</include>
+
                   <include>io.opencensus</include>
                   <include>io.perfmark</include>
                   <include>org.apache.httpcomponents</include>
@@ -176,6 +205,7 @@
                     <exclude>com.google.cloud.hadoop.util.AccessBoundary</exclude>
                     <exclude>com.google.cloud.hadoop.util.AccessBoundary$Action</exclude>
                     <exclude>com.google.cloud.hadoop.util.AutoValue_AccessBoundary</exclude>
+                    <exclude>com.google.auth.appengine.AppEngineCredentials</exclude>
                   </excludes>
                 </relocation>
                 <relocation>
@@ -183,6 +213,7 @@
                   <shadedPattern>com.google.cloud.hadoop.repackaged.gcs.org</shadedPattern>
                   <includes>
                     <include>org.apache.commons.codec.**</include>
+                    <include>org.apache.commons.cli.**</include>
                     <include>org.apache.http.**</include>
                     <include>org.threeten.**</include>
                   </includes>

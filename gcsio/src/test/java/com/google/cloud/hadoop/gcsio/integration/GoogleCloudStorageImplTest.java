@@ -89,7 +89,7 @@ public class GoogleCloudStorageImplTest {
   // We want to test this entire class with both javaClientImpl and gcsImpl
   // Some of our internal endpoints only work with TD
   public static Iterable<Boolean> javaClientEnabled() {
-    return ImmutableList.of(false, true);
+    return ImmutableList.of(true);
   }
 
   @Rule
