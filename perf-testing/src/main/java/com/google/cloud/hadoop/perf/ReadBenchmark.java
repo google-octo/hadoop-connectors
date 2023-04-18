@@ -5,6 +5,8 @@ import static java.lang.Math.max;
 import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations.BENCHMARK_TYPE_ENUM;
+import com.google.cloud.hadoop.perf.util.DataPoint;
+import com.google.cloud.hadoop.perf.util.ReadResult;
 import com.google.common.flogger.GoogleLogger;
 import java.io.IOException;
 import java.util.Random;
@@ -22,11 +24,20 @@ class ReadBenchmark {
 
   private final BenchmarkConfigurations benchmarkConfigurations;
 
+  private final ReadResult readResult;
+
   public ReadBenchmark(BenchmarkConfigurations benchmarkConfigurations) throws IOException {
     this.benchmarkConfigurations = benchmarkConfigurations;
     this.ghfs =
         createGhfs(
             connectorConfigurations.getConfiguration(benchmarkConfigurations.getConfigMap()));
+    this.readResult =
+        ReadResult.builder()
+            .setConnectorReadChunkSize(benchmarkConfigurations.getChunkSize())
+            .setApiName("DIRECT_PATH")
+            .setLibBufferSize(2 * 1024 * 1024)
+            .setBenchmarkType(benchmarkConfigurations.getBenchmarkType())
+            .build();
   }
 
   public void start() throws IOException {
@@ -73,19 +84,27 @@ class ReadBenchmark {
     int countRead = 0;
 
     for (int i = 0; i < benchmarkConfigurations.getReadCalls(); i++) {
+      DataPoint dp = new DataPoint();
+      dp.setThreadNumber(1);
       countRead += 1;
       Random r = new Random(i);
       long offset = (long) r.nextInt(fileSizeKB - chunkSizeKB) * 1024;
+      dp.setReadOffset(offset);
       byte[] buff = new byte[chunkSize];
       long start = System.currentTimeMillis();
       inputStream.seek(offset);
       int readBytes = inputStream.read(buff);
+      dp.setRequestBytes(buff.length);
+      dp.setBytesRead(readBytes);
       long dur = System.currentTimeMillis() - start;
       if (readBytes < chunkSize) {
         logger.atWarning().log("Got remaining bytes: %d", chunkSize - readBytes);
       }
       logger.atInfo().log("RANDOM-READ duration : %d", dur);
+      dp.setElapsedTime(dur);
+      readResult.addDatapoint(dp);
     }
+    readResult.close();
     logger.atInfo().log("read whole file and took %d iterations", countRead);
   }
 
