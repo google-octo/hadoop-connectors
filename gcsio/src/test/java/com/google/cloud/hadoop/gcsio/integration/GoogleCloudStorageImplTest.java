@@ -89,7 +89,7 @@ public class GoogleCloudStorageImplTest {
   // We want to test this entire class with both javaClientImpl and gcsImpl
   // Some of our internal endpoints only work with TD
   public static Iterable<Boolean> javaClientEnabled() {
-    return ImmutableList.of(true);
+    return ImmutableList.of(false);
   }
 
   @Rule
@@ -154,7 +154,7 @@ public class GoogleCloudStorageImplTest {
 
     int uploadChunkSize = 1024 * 1024;
     TrackingStorageWrapper<GoogleCloudStorage> trackingGcs =
-        newTrackingGoogleCloudStorage(getOptionsWithUploadChunk(uploadChunkSize));
+        newTrackingGoogleCloudStorage(GCS_OPTIONS);
 
     int partitionsCount = 32;
     byte[] partition =

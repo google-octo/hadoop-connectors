@@ -8,22 +8,32 @@ public class BenchmarkConfigurations {
   public static enum BENCHMARK_TYPE_ENUM {
     READ,
     RANDOM_READ,
-
-    JAVA_STORAGE
+    WRITE,
+    JAVA_STORAGE_READ,
+    JAVA_STORAGE_WRITE
   };
 
   private int chunkSize = 2 * 1024 * 1024;
-  private int readCalls = 100;
+  private int callCount = 100;
+  private long writeFileSize = 1 * 1024 * 1024;
   private BENCHMARK_TYPE_ENUM benchmarkType;
 
   private Map<String, String> configMap = new HashMap<>();
 
-  public void setReadCalls(int readCalls) {
-    this.readCalls = readCalls;
+  public void setCallCount(int callCount) {
+    this.callCount = callCount;
   }
 
-  public int getReadCalls() {
-    return this.readCalls;
+  public void setWriteFileSize(long writeFileSize) {
+    this.writeFileSize = writeFileSize;
+  }
+
+  public long getWriteFileSize() {
+    return writeFileSize;
+  }
+
+  public int getCallCount() {
+    return this.callCount;
   }
 
   public int getChunkSize() {

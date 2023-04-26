@@ -1,6 +1,6 @@
 package com.google.cloud.hadoop.perf.util;
 
-public class DataPoint {
+public class ReadDataPointModel {
   private static final char ELEMENT_DELIMITER = ',';
   private long elapsedTime = 0;
   private static final String ELAPSED_TIME = "ElapsedTime";
@@ -12,6 +12,10 @@ public class DataPoint {
   private static final String BYTES_READ = "BytesRead";
   private int threadNumber = 0;
   private static final String THREAD_NUMBER = "ThreadNumber";
+  private String apiName = "";
+  private static final String API_NAME = "ApiName";
+  private String benchmarkType = "";
+  private static final String BENCHMARK_TYPE = "BenchmarkType";
 
   public void setElapsedTime(long elapsedTime) {
     this.elapsedTime = elapsedTime;
@@ -33,14 +37,24 @@ public class DataPoint {
     this.bytesRead = bytesRead;
   }
 
+  public void setApiName(String apiName) {
+    this.apiName = apiName;
+  }
+
+  public void setBenchmarkType(String benchmarkType) {
+    this.benchmarkType = benchmarkType;
+  }
+
   public String toCommaSeparated() {
     String result = "";
 
+    result += apiName + ELEMENT_DELIMITER;
+    result += benchmarkType + ELEMENT_DELIMITER;
     result += String.valueOf(threadNumber) + ELEMENT_DELIMITER;
     result += String.valueOf(requestBytes) + ELEMENT_DELIMITER;
     result += String.valueOf(readOffset) + ELEMENT_DELIMITER;
     result += String.valueOf(bytesRead) + ELEMENT_DELIMITER;
-    result += String.valueOf(elapsedTime) + ELEMENT_DELIMITER;
+    result += String.valueOf(elapsedTime);
 
     result += System.lineSeparator();
     return result;
@@ -49,6 +63,8 @@ public class DataPoint {
   public static String getCsvHeader() {
     String header = "";
 
+    header += API_NAME + ELEMENT_DELIMITER;
+    header += BENCHMARK_TYPE + ELEMENT_DELIMITER;
     header += THREAD_NUMBER + ELEMENT_DELIMITER;
     header += BYTES_REQUESTED + ELEMENT_DELIMITER;
     header += READ_OFFSET + ELEMENT_DELIMITER;

@@ -25,8 +25,15 @@ public class Args {
           case "RANDOM_READ":
             benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.RANDOM_READ);
             break;
-          case "JAVA_STORAGE":
-            benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.JAVA_STORAGE);
+          case "JAVA_STORAGE_READ":
+            benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.JAVA_STORAGE_READ);
+            break;
+          case "JAVA_STORAGE_WRITE":
+            benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.JAVA_STORAGE_WRITE);
+            break;
+          case "WRITE":
+            benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.WRITE);
+            break;
           default:
             benchmarkConfigurations.setBenchmarkType(BENCHMARK_TYPE_ENUM.READ);
         }
@@ -37,7 +44,11 @@ public class Args {
       }
 
       if (cmd.hasOption("n")) {
-        benchmarkConfigurations.setReadCalls(Integer.parseInt(cmd.getOptionValue("n")));
+        benchmarkConfigurations.setCallCount(Integer.parseInt(cmd.getOptionValue("n")));
+      }
+
+      if (cmd.hasOption("s")) {
+        benchmarkConfigurations.setWriteFileSize(Long.parseLong(cmd.getOptionValue("s")));
       }
 
     } catch (ParseException e) {
@@ -55,6 +66,7 @@ public class Args {
         new Option("c", "connectorConfig", true, "Config parameters to be passed to connector"));
     options.addOption(
         new Option("n", "callCount", true, "Total number of calls to be made for read or write."));
+    options.addOption(new Option("s", "fileSizeWrite", true, "Size of file to be written."));
     return options;
   }
 }

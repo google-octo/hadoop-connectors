@@ -125,6 +125,7 @@ public class GoogleCloudStorageTestHelper {
   public static GoogleCloudStorageOptions.Builder getStandardOptionBuilder() {
     return GoogleCloudStorageOptions.builder()
         .setAppName(GoogleCloudStorageTestHelper.APP_NAME)
+        .setTraceLogEnabled(true)
         .setProjectId(checkNotNull(TestConfiguration.getInstance().getProjectId()));
   }
 

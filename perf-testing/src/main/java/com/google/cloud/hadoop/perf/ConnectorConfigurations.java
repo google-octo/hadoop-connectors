@@ -36,7 +36,7 @@ public class ConnectorConfigurations {
     return configuration;
   }
 
-  protected Configuration getConfiguration(Map<String, String> configMap) {
+  protected Configuration getConfigurationFromMap(Map<String, String> configMap) {
     Configuration configuration = getDefaultConfiguration();
     for (Entry<String, String> config : configMap.entrySet()) {
       configuration.set(config.getKey(), config.getValue());

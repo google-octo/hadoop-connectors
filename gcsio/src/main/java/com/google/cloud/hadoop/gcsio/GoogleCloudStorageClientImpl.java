@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auto.value.AutoBuilder;
 import com.google.cloud.hadoop.util.AccessBoundary;
 import com.google.cloud.hadoop.util.ErrorTypeExtractor;
@@ -200,7 +199,6 @@ public class GoogleCloudStorageClientImpl extends ForwardingGoogleCloudStorage {
     return StorageOptions.grpc()
         .setAttemptDirectPath(storageOptions.isDirectPathPreferred())
         .setHeaderProvider(() -> storageOptions.getHttpRequestHeaders())
-        .setCredentials(GoogleCredentials.getApplicationDefault())
         .build()
         .getService();
   }

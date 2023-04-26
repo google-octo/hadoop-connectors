@@ -5,7 +5,7 @@ import static java.lang.Math.max;
 import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations;
 import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations.BENCHMARK_TYPE_ENUM;
-import com.google.cloud.hadoop.perf.util.DataPoint;
+import com.google.cloud.hadoop.perf.util.ReadDataPointModel;
 import com.google.cloud.hadoop.perf.util.ReadResult;
 import com.google.common.flogger.GoogleLogger;
 import java.io.IOException;
@@ -21,23 +21,17 @@ class ReadBenchmark {
   private final String fileName = "open_withItemInfo0";
   private final GoogleHadoopFileSystem ghfs;
   private final ConnectorConfigurations connectorConfigurations = new ConnectorConfigurations();
-
   private final BenchmarkConfigurations benchmarkConfigurations;
-
   private final ReadResult readResult;
+  private final Configuration configuration;
 
-  public ReadBenchmark(BenchmarkConfigurations benchmarkConfigurations) throws IOException {
+  public ReadBenchmark(BenchmarkConfigurations benchmarkConfigurations, ReadResult readResult)
+      throws IOException {
     this.benchmarkConfigurations = benchmarkConfigurations;
-    this.ghfs =
-        createGhfs(
-            connectorConfigurations.getConfiguration(benchmarkConfigurations.getConfigMap()));
-    this.readResult =
-        ReadResult.builder()
-            .setConnectorReadChunkSize(benchmarkConfigurations.getChunkSize())
-            .setApiName("DIRECT_PATH")
-            .setLibBufferSize(2 * 1024 * 1024)
-            .setBenchmarkType(benchmarkConfigurations.getBenchmarkType())
-            .build();
+    this.configuration =
+        connectorConfigurations.getConfigurationFromMap(benchmarkConfigurations.getConfigMap());
+    this.ghfs = createGhfs(configuration);
+    this.readResult = readResult;
   }
 
   public void start() throws IOException {
@@ -47,6 +41,28 @@ class ReadBenchmark {
     } else {
       seqRead();
     }
+  }
+
+  private boolean isGRPCTransport() {
+    return (configuration.get("fs.gs.grpc.enable") == null
+            || configuration.get("fs.gs.grpc.enable") == "false")
+        ? false
+        : true;
+  }
+
+  private String getApiName() {
+    String apiName = "connector-read";
+    String clientType = configuration.get("fs.gs.client.type");
+    if (clientType != null && clientType.equalsIgnoreCase("STORAGE_CLIENT")) {
+      apiName += "_java-storage";
+    }
+
+    if (isGRPCTransport()) {
+      apiName += "_gRPC";
+    } else {
+      apiName += "_json";
+    }
+    return apiName;
   }
 
   private void seqRead() throws IOException {
@@ -83,9 +99,12 @@ class ReadBenchmark {
 
     int countRead = 0;
 
-    for (int i = 0; i < benchmarkConfigurations.getReadCalls(); i++) {
-      DataPoint dp = new DataPoint();
+    for (int i = 0; i < benchmarkConfigurations.getCallCount(); i++) {
+      ReadDataPointModel dp = new ReadDataPointModel();
+      dp.setApiName(getApiName());
       dp.setThreadNumber(1);
+      dp.setBenchmarkType(benchmarkConfigurations.getBenchmarkType().toString());
+
       countRead += 1;
       Random r = new Random(i);
       long offset = (long) r.nextInt(fileSizeKB - chunkSizeKB) * 1024;
@@ -94,17 +113,18 @@ class ReadBenchmark {
       long start = System.currentTimeMillis();
       inputStream.seek(offset);
       int readBytes = inputStream.read(buff);
+      long dur = System.currentTimeMillis() - start;
+
       dp.setRequestBytes(buff.length);
       dp.setBytesRead(readBytes);
-      long dur = System.currentTimeMillis() - start;
+      dp.setElapsedTime(dur);
+      readResult.addDatapoint(dp);
+
       if (readBytes < chunkSize) {
         logger.atWarning().log("Got remaining bytes: %d", chunkSize - readBytes);
       }
       logger.atInfo().log("RANDOM-READ duration : %d", dur);
-      dp.setElapsedTime(dur);
-      readResult.addDatapoint(dp);
     }
-    readResult.close();
     logger.atInfo().log("read whole file and took %d iterations", countRead);
   }
 

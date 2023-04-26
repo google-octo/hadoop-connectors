@@ -14,18 +14,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-public class ReadResult implements Closeable {
+public class WriteResult implements Closeable {
 
   private static final String PATH = "output/";
 
   private static final String FILE_PREFIX = "result";
   private static final String FILE_NAME_DELIMITER = "-";
-  private final long connectorChunkSize;
   private final long libBufferSize;
-  private List<ReadDataPointModel> orderedList = new LinkedList<>();
 
-  ReadResult(long connectorReadChunkSize, long libBufferSize) throws IOException {
-    this.connectorChunkSize = connectorReadChunkSize;
+  private List<WriteDataPointModel> orderedList = new LinkedList<>();
+
+  WriteResult(long libBufferSize) throws IOException {
     this.libBufferSize = libBufferSize;
     Files.createDirectories(Paths.get(PATH));
   }
@@ -38,7 +37,7 @@ public class ReadResult implements Closeable {
         FILE_PREFIX, FILE_NAME_DELIMITER, randomString, FILE_NAME_DELIMITER, timeStamp);
   }
 
-  public void addDatapoint(ReadDataPointModel dataPoint) {
+  public void addDatapoint(WriteDataPointModel dataPoint) {
     this.orderedList.add(dataPoint);
   }
 
@@ -53,8 +52,8 @@ public class ReadResult implements Closeable {
     try {
       FileWriter fw = new FileWriter(file.getAbsoluteFile());
       BufferedWriter bw = new BufferedWriter(fw);
-      bw.write(ReadDataPointModel.getCsvHeader());
-      for (ReadDataPointModel dp : orderedList) {
+      bw.write(WriteDataPointModel.getCsvHeader());
+      for (WriteDataPointModel dp : orderedList) {
         bw.write(dp.toCommaSeparated());
       }
       bw.close();
@@ -65,17 +64,15 @@ public class ReadResult implements Closeable {
     closeInternal();
   }
 
-  public static Builder builder() {
-    return new AutoBuilder_ReadResult_Builder();
+  public static WriteResult.Builder builder() {
+    return new AutoBuilder_WriteResult_Builder();
   }
 
-  @AutoBuilder(ofClass = ReadResult.class)
+  @AutoBuilder(ofClass = WriteResult.class)
   public abstract static class Builder {
 
-    public abstract ReadResult.Builder setLibBufferSize(long libBufferSize);
+    public abstract WriteResult.Builder setLibBufferSize(long libBufferSize);
 
-    public abstract ReadResult.Builder setConnectorReadChunkSize(long connectorReadChunkSize);
-
-    public abstract ReadResult build() throws IOException;
+    public abstract WriteResult build() throws IOException;
   }
 }
