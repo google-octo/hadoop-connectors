@@ -5,7 +5,6 @@ import com.google.cloud.hadoop.perf.util.BenchmarkConfigurations;
 import com.google.cloud.hadoop.perf.util.WriteResult;
 import com.google.common.flogger.GoogleLogger;
 import java.io.IOException;
-import java.util.Map;
 
 public class BenchmarkRunner {
   private static final GoogleLogger logger = GoogleLogger.forEnclosingClass();
@@ -53,10 +52,6 @@ public class BenchmarkRunner {
 
       // Write benchmark
       WriteResult writeResult = WriteResult.builder().setLibBufferSize(64 * 1024 * 1024).build();
-      Map<String, String> configMap = benchmarkConfigurations.getConfigMap();
-      configMap.put("fs.gs.client.type", "STORAGE_CLIENT");
-      configMap.put("fs.gs.grpc.enable", "true");
-      configMap.put("fs.gs.grpc.trafficdirector.enable", "true");
       WriteBenchmark writeBenchmark = new WriteBenchmark(benchmarkConfigurations, writeResult);
       writeBenchmark.start();
 
